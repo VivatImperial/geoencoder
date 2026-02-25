@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Дополняет эксперимент: тестовые предсказания, визуализации, обновлённый history.png.
 Запуск: uv run python geocoding/backfill_experiment.py [путь к эксперименту]
@@ -133,8 +132,11 @@ def main() -> None:
 
     test_metrics = compute_test_metrics(model, test_loader, device)
     metrics_path = exp_dir / "metrics.json"
-    with metrics_path.open(encoding="utf-8") as f:
-        metrics_out = json.load(f)
+    if metrics_path.is_file():
+        with metrics_path.open(encoding="utf-8") as f:
+            metrics_out = json.load(f)
+    else:
+        metrics_out = {"best_epoch": None, "best_mean_distance_m": test_metrics["overall"]["mean_distance_m"], "history": []}
     metrics_out["test_metrics"] = test_metrics
     with metrics_path.open("w", encoding="utf-8") as f:
         json.dump(metrics_out, f, indent=2, ensure_ascii=False)

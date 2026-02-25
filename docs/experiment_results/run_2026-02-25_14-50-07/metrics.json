@@ -1,0 +1,47 @@
+{
+  "best_epoch": null,
+  "best_mean_distance_m": 2042.8992444472372,
+  "history": [],
+  "test_metrics": {
+    "overall": {
+      "mean_distance_m": 2042.8992444472372,
+      "median_distance_m": 600.1277498552089,
+      "p90_distance_m": 2549.1962201445226,
+      "p95_distance_m": 8193.543265877355,
+      "n": 13690
+    },
+    "in_overlap": {
+      "mean_distance_m": 944.7557163077314,
+      "median_distance_m": 570.4443563832134,
+      "p90_distance_m": 1826.2945225601907,
+      "p95_distance_m": 3009.5342622039007,
+      "n": 1660
+    },
+    "no_overlap": {
+      "mean_distance_m": 2194.430271605307,
+      "median_distance_m": 604.9480679005183,
+      "p90_distance_m": 2736.7876116700972,
+      "p95_distance_m": 9756.405134411514,
+      "n": 12030
+    },
+    "n_overall": 13690,
+    "n_in_overlap": 1660,
+    "n_no_overlap": 12030,
+    "clean": {
+      "mean_distance_m": 2017.196934944693,
+      "median_distance_m": 590.615968968202,
+      "p90_distance_m": 2511.713629282883,
+      "p95_distance_m": 7872.718256281939,
+      "n": 6845
+    },
+    "augmented": {
+      "mean_distance_m": 2068.6015539497816,
+      "median_distance_m": 610.1444168708978,
+      "p90_distance_m": 2581.575013543172,
+      "p95_distance_m": 8241.419614118384,
+      "n": 6845
+    },
+    "n_clean": 6845,
+    "n_augmented": 6845
+  }
+}
