@@ -1,0 +1,18 @@
+# Не копировать в контекст сборки
+.venv/
+venv/
+__pycache__/
+.git/
+.gitignore
+*.osm.pbf
+data/
+geocoding/experiments/run_*/
+comparing/
+eda_and_cleaning/*.csv
+eda_and_cleaning/*.json
+eda_and_cleaning/report.md
+*.md
+.idea/
+.vscode/
+.DS_Store
+*.log

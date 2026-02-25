@@ -1,0 +1,30 @@
+# Обучение геокодера: проект + SAGE (опечатки). Базовый образ — Python 3.12.
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update -qq && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Сначала ставим torch и transformers с поддержкой ModernBERT (USER2-small)
+RUN pip install --no-cache-dir "torch" "transformers>=4.48" "matplotlib" "tqdm" "rich" "folium"
+
+# SAGE без переустановки зависимостей (--no-deps), чтобы не перебить transformers
+RUN pip install --no-cache-dir "git+https://github.com/ai-forever/sage.git" --no-deps
+
+# Зависимости SAGE, не конфликтующие с нашими версиями
+RUN pip install --no-cache-dir "numpy" "pandas" "pyyaml" "packaging" "requests" \
+    "sentencepiece" "protobuf" "timeout-decorator" "augmentex>=1.3.1" "accelerate" "evaluate" "datasets"
+
+# Копируем код (контекст сборки — корень репозитория)
+COPY pyproject.toml ./
+COPY geocoding/ geocoding/
+
+ENV PYTHONPATH=/app
+
+# Сборка: из корня репозитория
+#   docker build -f Dockerfile.geocoding -t geocoding-train .
+# Запуск: смонтировать data/ и geocoding/experiments/
+#   docker run --rm -v "$(pwd)/data:/app/data" -v "$(pwd)/geocoding/experiments:/app/geocoding/experiments" geocoding-train
+# Для своего CSV: docker run ... geocoding-train python geocoding/train.py --csv /app/data/your.csv
+CMD ["python", "geocoding/train.py", "--csv", "data/addresses_spb.csv"]

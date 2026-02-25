@@ -1,0 +1,50 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Окружение и секреты
+.env
+.env.local
+*.env
+
+# IDE и ОС
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Данные (тяжёлые или сгенерированные)
+*.osm.pbf
+data/*.csv
+data/*.json
+
+# Эксперименты геокодера (чекпоинты, логи, артефакты)
+geocoding/experiments/run_*/
+geocoding/experiments/*.log
+
+# Результаты сравнения (генерируются скриптом)
+comparing/results/*.json
+comparing/results/*.md
+
+# EDA и очистка (генерируются analyze_addresses.py)
+eda_and_cleaning/addresses_spb_cleaned.csv
+eda_and_cleaning/dropped_examples.json
+eda_and_cleaning/report.md
+eda_and_cleaning/summary.json
+
+# Логи и кэши (если появятся в корне)
+*.log
+.cache/
