@@ -14,12 +14,16 @@ import re
 import time
 from pathlib import Path
 
-# Загрузка .env при наличии (python-dotenv в dev-зависимостях)
-try:
-    from dotenv import load_dotenv  # type: ignore[import-untyped]
-    load_dotenv(Path(__file__).resolve().parent / ".env")
-except ImportError:
-    pass
+from dotenv import load_dotenv
+from tqdm import tqdm
+
+_env_dir = Path(__file__).resolve().parent
+load_dotenv(_env_dir / ".env")
+if not (os.environ.get("DADATA_API_KEY") or os.environ.get("MISTRAL_API_KEY")):
+    load_dotenv(Path.cwd() / "comparing" / ".env")
+
+# Префикс для Dadata и Mistral, чтобы не путали регион (все адреса — СПб)
+ADDRESS_PREFIX = "Санкт-Петербург, "
 
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -140,14 +144,26 @@ def run_comparison(
     predictions_path: Path,
     out_dir: Path,
     sample: int | None = None,
+    sample_clean: int | None = None,
+    sample_augmented: int | None = None,
     skip_dadata: bool = False,
     skip_mistral: bool = False,
     rate_limit_dadata: float = 0.06,
+    rate_limit_mistral: float = 3.0,
 ) -> None:
+    import random
+    random.seed(42)
     rows = load_predictions(predictions_path)
-    if sample is not None and sample < len(rows):
-        import random
-        random.seed(42)
+    if sample_clean is not None or sample_augmented is not None:
+        clean_rows = [r for r in rows if not r.get("is_augmented")]
+        aug_rows = [r for r in rows if r.get("is_augmented")]
+        if sample_clean is not None and len(clean_rows) > sample_clean:
+            clean_rows = random.sample(clean_rows, sample_clean)
+        if sample_augmented is not None and len(aug_rows) > sample_augmented:
+            aug_rows = random.sample(aug_rows, sample_augmented)
+        rows = clean_rows + aug_rows
+        random.shuffle(rows)
+    elif sample is not None and sample < len(rows):
         rows = random.sample(rows, sample)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -168,19 +184,25 @@ def run_comparison(
         },
     }
 
+    # Инициализация полей для карты сравнения (наша модель уже есть в pred_lat, pred_lon)
+    for r in rows:
+        r["dadata_lat"] = r["dadata_lon"] = None
+        r["mistral_lat"] = r["mistral_lon"] = None
+
     # Dadata
     dadata_key = os.environ.get("DADATA_API_KEY", "").strip()
     dadata_secret = os.environ.get("DADATA_SECRET_KEY", "").strip()
     if not skip_dadata and dadata_key and dadata_secret:
         dists, misses = [], 0
         clean_d, aug_d = [], []
-        for i, r in enumerate(rows):
+        for i, r in enumerate(tqdm(rows, desc="Dadata")):
             if rate_limit_dadata and i > 0:
                 time.sleep(rate_limit_dadata)
-            lat, lon = geocode_dadata(r["address"], dadata_key, dadata_secret)
+            lat, lon = geocode_dadata(ADDRESS_PREFIX + r["address"], dadata_key, dadata_secret)
             if lat is None or lon is None:
                 misses += 1
                 continue
+            r["dadata_lat"], r["dadata_lon"] = lat, lon
             d = haversine_m(r["true_lat"], r["true_lon"], lat, lon)
             dists.append(d)
             if r.get("is_augmented"):
@@ -207,13 +229,14 @@ def run_comparison(
     if not skip_mistral and mistral_key:
         dists, misses = [], 0
         clean_d, aug_d = [], []
-        for i, r in enumerate(rows):
+        for i, r in enumerate(tqdm(rows, desc="Mistral")):
             if i > 0:
-                time.sleep(0.2)
-            lat, lon = geocode_mistral(r["address"], mistral_key)
+                time.sleep(rate_limit_mistral)
+            lat, lon = geocode_mistral(ADDRESS_PREFIX + r["address"], mistral_key)
             if lat is None or lon is None:
                 misses += 1
                 continue
+            r["mistral_lat"], r["mistral_lon"] = lat, lon
             d = haversine_m(r["true_lat"], r["true_lon"], lat, lon)
             dists.append(d)
             if r.get("is_augmented"):
@@ -242,6 +265,32 @@ def run_comparison(
     json_path = out_dir / "comparison_report.json"
     with json_path.open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
+
+    # Данные для карты сравнения (истинная точка + 3 прогноза)
+    map_data = [
+        {
+            "address": r.get("address", "")[:120],
+            "true_lat": r["true_lat"],
+            "true_lon": r["true_lon"],
+            "our_lat": r["pred_lat"],
+            "our_lon": r["pred_lon"],
+            "our_distance_m": r["distance_m"],
+            "dadata_lat": r.get("dadata_lat"),
+            "dadata_lon": r.get("dadata_lon"),
+            "mistral_lat": r.get("mistral_lat"),
+            "mistral_lon": r.get("mistral_lon"),
+        }
+        for r in rows
+    ]
+    map_data_path = out_dir / "comparison_map_data.json"
+    with map_data_path.open("w", encoding="utf-8") as f:
+        json.dump(map_data, f, indent=2, ensure_ascii=False)
+    try:
+        from geocoding.visualize_test import build_comparison_map_html
+        build_comparison_map_html(map_data_path, out_dir / "comparison_map.html")
+        print(f"Карта сравнения: {out_dir / 'comparison_map.html'}")
+    except Exception as e:
+        print(f"Карта сравнения не построена: {e}")
 
     # Текстовая сводка
     lines = [
@@ -277,9 +326,12 @@ def main() -> None:
     parser.add_argument("--predictions", type=str, required=True, help="Путь к test_predictions.json или к каталогу эксперимента")
     parser.add_argument("--out", type=str, default="comparing/results", help="Каталог для отчётов (JSON + MD)")
     parser.add_argument("--sample", type=int, default=None, help="Ограничить число строк для API (для быстрого прогона)")
+    parser.add_argument("--sample-clean", type=int, default=250, help="Взять не более N чистых адресов (по умолчанию 250)")
+    parser.add_argument("--sample-augmented", type=int, default=250, help="Взять не более N аугментированных адресов (по умолчанию 250)")
     parser.add_argument("--skip-dadata", action="store_true", help="Не вызывать Dadata")
     parser.add_argument("--skip-mistral", action="store_true", help="Не вызывать Mistral")
     parser.add_argument("--rate-limit-dadata", type=float, default=0.06, help="Пауза между запросами Dadata (сек), 0 — без паузы")
+    parser.add_argument("--rate-limit-mistral", type=float, default=3.0, help="Пауза между запросами Mistral (сек)")
     args = parser.parse_args()
 
     path = Path(args.predictions)
@@ -292,9 +344,12 @@ def main() -> None:
         path,
         Path(args.out),
         sample=args.sample,
+        sample_clean=args.sample_clean,
+        sample_augmented=args.sample_augmented,
         skip_dadata=args.skip_dadata,
         skip_mistral=args.skip_mistral,
         rate_limit_dadata=args.rate_limit_dadata,
+        rate_limit_mistral=args.rate_limit_mistral,
     )
 
 

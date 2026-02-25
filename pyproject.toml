@@ -12,12 +12,11 @@ dependencies = [
     "transformers>=4.40",
     "matplotlib>=3.7",
     "folium>=0.15",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "python-dotenv>=1.0",
-]
+dev = []
 
 [build-system]
 requires = ["hatchling"]
