@@ -1,0 +1,96 @@
+{
+  "n_total": 500,
+  "predictions_path": "geocoding/experiments/run_2026-02-25_14-50-07/test_predictions.json",
+  "methods": {
+    "our_model": {
+      "overall": {
+        "mean_distance_m": 1778.0177800000001,
+        "median_distance_m": 607.7,
+        "p90_distance_m": 2278.12,
+        "p95_distance_m": 5716.12,
+        "n": 500
+      },
+      "clean": {
+        "mean_distance_m": 1717.79304,
+        "median_distance_m": 582.33,
+        "p90_distance_m": 2458.51,
+        "p95_distance_m": 6718.44,
+        "n": 250
+      },
+      "augmented": {
+        "mean_distance_m": 1838.24252,
+        "median_distance_m": 632.45,
+        "p90_distance_m": 1912.06,
+        "p95_distance_m": 4722.77,
+        "n": 250
+      },
+      "n_misses": 0,
+      "n_total": 500,
+      "cost_estimate": {
+        "currency": "RUB",
+        "value": 0,
+        "note": "локальная модель"
+      }
+    },
+    "dadata": {
+      "overall": {
+        "mean_distance_m": 11124.090733011959,
+        "median_distance_m": 54.80127184649542,
+        "p90_distance_m": 36122.64014665676,
+        "p95_distance_m": 40238.71931792742,
+        "n": 498
+      },
+      "clean": {
+        "mean_distance_m": 13904.47024753444,
+        "median_distance_m": 67.62275495490312,
+        "p90_distance_m": 37308.4140074138,
+        "p95_distance_m": 44848.803177307476,
+        "n": 249
+      },
+      "augmented": {
+        "mean_distance_m": 8343.711218489478,
+        "median_distance_m": 48.992481979841656,
+        "p90_distance_m": 35654.252638594946,
+        "p95_distance_m": 37053.13025753235,
+        "n": 249
+      },
+      "n_misses": 2,
+      "n_total": 500,
+      "cost_estimate": {
+        "currency": "RUB",
+        "value": 100.0,
+        "note": "20 коп/запрос, см. dadata.ru/pricing"
+      }
+    },
+    "mistral": {
+      "overall": {
+        "mean_distance_m": 16747.31663540325,
+        "median_distance_m": 16565.65832172491,
+        "p90_distance_m": 30662.844611625897,
+        "p95_distance_m": 33849.17790793997,
+        "n": 500
+      },
+      "clean": {
+        "mean_distance_m": 17318.363180225082,
+        "median_distance_m": 17533.646265737694,
+        "p90_distance_m": 31227.151397439906,
+        "p95_distance_m": 34159.61288623065,
+        "n": 250
+      },
+      "augmented": {
+        "mean_distance_m": 16176.27009058142,
+        "median_distance_m": 16103.136065742636,
+        "p90_distance_m": 30356.33599393935,
+        "p95_distance_m": 32356.312271736406,
+        "n": 250
+      },
+      "n_misses": 0,
+      "n_total": 500,
+      "cost_estimate": {
+        "currency": "USD",
+        "value": 0.012,
+        "note": "Mistral Small ~$0.05/1M in, $0.08/1M out"
+      }
+    }
+  }
+}

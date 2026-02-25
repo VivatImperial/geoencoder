@@ -35,10 +35,6 @@ data/*.json
 geocoding/experiments/run_*/
 geocoding/experiments/*.log
 
-# Результаты сравнения (генерируются скриптом)
-comparing/results/*.json
-comparing/results/*.md
-
 # EDA и очистка (генерируются analyze_addresses.py)
 eda_and_cleaning/addresses_spb_cleaned.csv
 eda_and_cleaning/dropped_examples.json
